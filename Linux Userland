@@ -1,0 +1,99 @@
+Quand vous allumez votre ordinateur, le système passe par plusieurs couches invisibles avant de vous afficher votre bureau.
+
+1. La Chaîne de Démarrage : Du Terminal à l'Interface
+
+• Le Noyau (Kernel) & le TTY : Au tout début, Linux démarre en mode textuel. Il ouvre un terminal de base appelé TTY (TeleTYpewriter). C'est l'environnement brut, noir avec du texte blanc.
+• Le Gestionnaire de Connexion (Display Manager) : C'est le premier programme graphique qui se lance. Son unique rôle est de servir de "gardien". Il affiche une jolie interface pour vous authentifier (entrer votre mot de passe) et vous permet de choisir quelle interface graphique vous souhaitez charger pour votre session.
+• La Session : Une fois le mot de passe validé, le gestionnaire de connexion s'efface et passe le relais au protocole d'affichage que vous avez sélectionné (dans votre cas : Hyprland via Wayland).
+
+2. Wayland vs X11 : Les Serveurs d'Affichage
+Pour qu'une application (comme votre navigateur web) puisse dessiner une fenêtre à l'écran, elle a besoin d'un chef d'orchestre : le serveur d'affichage.
+• X11 (standard historique): Créé dans les années 1980, c'est un protocole très ancien. Il fonctionne avec un serveur central lourd. Lorsqu'une application veut afficher quelque chose, elle parle au serveur X11, qui parle ensuite au gestionnaire de fenêtres, qui renvoie l'information au serveur, qui enfin l'affiche. Ce va-et-vient crée parfois des déchirures d'écran (screen tearing).
+• Wayland: C'est le remplaçant moderne de X11. Wayland simplifie tout : il fusionne le serveur d'affichage et le gestionnaire de fenêtres en une seule entité (appelée le Compositeur). L'application dessine directement son image, et le compositeur l'affiche à l'écran sans intermédiaire. C'est beaucoup plus fluide, plus sécurisé et mieux adapté aux écrans modernes des PC portables. 
+
+3. Les Différents Styles d'Interfaces : Floating vs Tiling
+Une fois que Wayland est actif, c'est l'interface choisie qui va décider de la disposition de vos logiciels. On sépare le monde Linux en deux philosophies :
+A. Les Environnements de Bureau (DE - Desktop Environments)
+• Concept : Une solution "clé en main" (ex: GNOME, KDE Plasma). Ils reproduisent la métaphore classique du bureau physique.
+• Gestion des fenêtres : Flottante (Floating). Les fenêtres se superposent, s'empilent, se maximisent ou se réduisent dans une barre des tâches. Vous utilisez principalement la souris pour les déplacer et les redimensionner.
+B. Les Gestionnaires de Fenêtres par Tuiles (Tiling Window Managers)
+• Concept : Une feuille blanche ultra-légère (ex: Hyprland). Conçu pour l'efficacité maximale et le contrôle total au clavier.
+• Gestion des fenêtres : Mosaïque (Tiling). Les fenêtres ne se chevauchent jamais. Le grand écran est découpé de manière mathématique en "tuiles" pour occuper automatiquement 100 % de l'espace. Si vous ouvrez une fenêtre, elle prend tout l'écran. Une deuxième ? L'écran se sépare en deux. Une troisième ? Une des tuiles se sépare à son tour.
+4. L'Écosystème Hyprland : La Philosophie "Unix"
+Contrairement à un environnement complet comme GNOME qui fournit tout (calculatrice, barre de tâches, paramètres, fond d'écran), Hyprland respecte la philosophie Unix : "Faire une seule chose, et la faire bien".
+Hyprland ne gère que le placement géométrique de vos fenêtres et les animations fluides. Pour tout le reste, vous devez greffer des briques indépendantes (des logiciels tiers) :
+       [ Votre Système Fedora (Fichiers, Utilisateurs Bash) ]
+                                │
+                        [ Moteur Wayland ]
+                                │
+                       [ HYPRLAND (Le Cœur) ]
+      ┌─────────────────────────┼────────────────────────┐
+      ▼                         ▼                        ▼
+[ Widgets ]               [ Menu Lanceur ]         [ Terminal ]
+(Waybar, AGS)              (Wofi, Rofi)          (Kitty, Alacritty)
+
+• Le Terminal (ex: Kitty) : Votre passerelle textuelle. Comme Hyprland tourne au-dessus de votre Fedora, chaque terminal que vous ouvrez utilise votre configuration d'utilisateur standard (bash). C'est le même utilisateur, avec les mêmes droits et les mêmes fichiers.
+• Le Menu Lanceur (ex: Wofi) : Un petit programme qui liste vos applications graphiques installées et vous permet de les chercher textuellement pour les lancer sans souris.
+• Les Outils de Widgets (ex: Waybar, AGS) : Ce sont des fenêtres transparentes ou semi-transparentes particulières qui s'accrochent aux bords de votre écran.
+• Waybar lit en continu l'état de votre système (le pourcentage de votre batterie, l'heure de l'horloge système, la force du signal Wi-Fi) et traduit ces données textuelles en blocs visuels stylisés avec du code CSS (le même langage qui rend les sites internet jolis).
+AGS ou Eww fonctionnent comme de mini-navigateurs web internes dédiés à votre bureau : ils permettent de coder des interfaces interactives complexes (comme un centre de contrôle de smartphone) en utilisant des scripts.
+
+1. La fondation dans le Kernel Linux : Les API fondamentales
+Wayland n'est pas un programme ou un démon qui tourne en arrière-plan ; c'est un protocole (un ensemble de règles de communication). Pour que ce protocole prenne vie, le compositeur (Hyprland) communique directement avec le Kernel Linux via trois sous-systèmes essentiels : [1, 2]
+A. KMS (Kernel Mode Setting)
+Autrefois, c'était le serveur graphique (X11) qui gérait la résolution de l'écran et les fréquences de rafraîchissement. Aujourd'hui, cette responsabilité est déléguée au Kernel via KMS.
+• Rôle : Configurer la résolution de l'écran, la profondeur des couleurs et les sorties vidéos (HDMI, DisplayPort, écran eDP du PC portable) dès le démarrage du système.
+• Interaction : Hyprland utilise KMS pour dire au noyau : "Je veux que cet écran fonctionne en 1920x1080 à 120Hz".
+B. DRM (Direct Rendering Manager)
+Le DRM est l'interface du noyau qui permet d'accéder à la carte graphique (GPU).
+• Rôle : Il gère l'allocation de la mémoire vidéo (VRAM) et planifie les commandes envoyées au processeur graphique.
+• Le concept clé - GEM (Graphics Execution Manager) : C'est une sous-partie de DRM. GEM permet à Hyprland de créer des espaces mémoire partagés (des buffers ou tampons) où les images des fenêtres vont être stockées.
+C. evdev & libinput
+Pour gérer votre clavier, votre souris et le pavé tactile (touchpad) de votre ordinateur portable, le noyau Linux expose les événements bruts via evdev (dans /dev/input/).
+• Rôle : Capturer les appuis sur les touches ou les mouvements de la souris.
+• L'intermédiaire indispensable - libinput : Hyprland n'écoute pas evdev directement. Il utilise une bibliothèque appelée libinput qui traduit les signaux bruts en événements intelligibles (comme la détection des gestes à deux ou trois doigts sur votre pavé tactile, le rejet de la paume de la main, ou la vitesse d'accélération de la souris).
+2. Le fonctionnement interne de Wayland : L'architecture "Zéro Copie"
+Sous l'ancien système X11, lorsqu'une application (comme Firefox) voulait afficher une image, elle l'envoyait au serveur X11, qui la renvoyait au gestionnaire de fenêtres, qui appliquait des effets, puis la renvoyait au serveur pour affichage. C'était lourd et lent.
+Wayland introduit le concept de Compositeur Unique (Hyprland joue à la fois le rôle de serveur d'affichage et de gestionnaire de fenêtres) et fonctionne selon le principe du "Zero-Copy" via la mémoire partagée :
+[ Application (ex: Firefox) ]                  [ Hyprland (Compositeur) ]
+            │                                              │
+            │ 1. Alloue de la mémoire via dma-buf          │
+            ├─────────────────────────────────────────────►│
+            │                                              │
+            │ 2. Dessine l'image (via OpenGL/Vulkan)       │
+            │    directement dans cette mémoire            │
+            │                                              │
+            │ 3. Envoie un signal "L'image est prête"      │
+            ├─────────────────────────────────────────────►│
+            │    (via le protocole Wayland / IPC IPC IPC)   │ 4. Reçoit le signal
+            │                                              │    Mélange les fenêtres (Compositing)
+            │                                              │    Donne l'image finale au GPU (via DRM/KMS)
+                                                           │
+                                                           ▼
+                                                   [ ÉCRAN PHYSIQUE ]
+
+1. L'allocation : L'application demande au système (via des mécanismes comme dma-buf ou shm) d'allouer une zone de mémoire partagée.
+2. Le rendu de l'application : L'application utilise des bibliothèques graphiques (comme GTK, Qt, ou directement OpenGL/Vulkan) pour dessiner sa fenêtre directement dans cette zone mémoire.
+3. Le signalement (Protocole Wayland) : Via une socket Unix locale (/run/user/1000/wayland-0), l'application envoie un message IPC (Inter-Process Communication) à Hyprland : "Hé, j'ai fini de dessiner dans le tampon mémoire X, tu peux l'afficher".
+4. Le Compositing : C'est là que le rôle d'Hyprland est crucial. Il prend les tampons mémoire de toutes les applications ouvertes, calcule leur position géométrique (les tuiles), applique les animations, les ombres, les flous d'arrière-plan (grâce à sa propre utilisation d'OpenGL/Vulkan), et envoie l'image finale globale directement à l'écran via l'API DRM/KMS du Kernel.
+L'image n'est jamais copiée d'un endroit à un autre de la mémoire RAM ; elle est lue directement là où elle a été dessinée. C'est ce qui explique la fluidité absolue d'un environnement Wayland.
+
+3. Comment Hyprland s'articule autour de tout ça ?
+Hyprland n'a pas réécrit tout le code nécessaire pour parler au Kernel, car c'est une tâche titanesque. Il s'appuie sur une fondation logicielle majeure : wlroots.
+Le rôle de wlroots (L'infrastructure)
+wlroots est une bibliothèque développée à l'origine par l'équipe de Sway (un autre gestionnaire de fenêtres). C'est elle qui implémente la plomberie de bas niveau de Wayland. [1]
+• C'est wlroots qui parle directement à DRM, KMS, et libinput.
+• C'est elle qui abstrait la complexité de la gestion des cartes graphiques (Intel, AMD, ou les pilotes propriétaires Nvidia).
+Le rôle propre d'Hyprland (L'intelligence et le style)
+Hyprland est écrit en C++. Il agit comme le "cerveau" au-dessus de wlroots. Son code gère :
+• La logique du Tiling : Les algorithmes mathématiques qui décident comment l'écran se divise automatiquement lorsque vous ouvrez une, deux ou dix fenêtres (le layout Dwindle ou Master).
+• Le moteur de rendu personnalisé : Contrairement à d'autres compositeurs très stricts comme Sway, l'auteur d'Hyprland a écrit un moteur de rendu graphique très poussé au-dessus d'OpenGL. C'est ce code spécifique qui gère les coins arrondis des fenêtres, les bordures colorées animées, les transitions fluides et les effets de flou (blur) sous les fenêtres transparentes.
+• L'écoute des raccourcis clavier : Hyprland intercepte les événements de libinput. Si vous pressez SUPER + Q, le code d'Hyprland intercepte cette combinaison, regarde son fichier de configuration (hyprland.conf), voit que cela correspond à l'action de lancer un terminal, et utilise l'appel système du Kernel fork() et execve() pour démarrer le processus kitty.
+
+4. Et pour ses éléments (Widgets, Barres, Menus) ?
+Pour faire fonctionner ses éléments satellites (comme la barre d'état Waybar ou le menu Wofi), Hyprland n'utilise pas de mécanismes magiques du noyau, il utilise des extensions officielles du protocole Wayland appelées Protocols / Extensions.
+Une application classique (comme un navigateur) n'a pas le droit de savoir où elle est placée sur l'écran, ni de se dessiner par-dessus les autres de force. C'est une sécurité de Wayland. Cependant, une barre de tâches ou un widget de bureau a besoin de privilèges spéciaux. [1]
+Pour cela, Wayland utilise l'extension wlr-layer-shell :
+• Lorsqu'un outil comme Waybar ou AGS démarre, il se connecte à la socket d'Hyprland et lui dit : "Je ne suis pas une application normale, je suis une couche de type TOP (ou BACKGROUND pour un fond d'écran)".
+• Hyprland comprend cette requête grâce au protocole layer-shell. Il réserve alors une zone exclusive en haut de l'écran pour Waybar, réduit la zone disponible pour les tuiles de fenêtres normales, et s'assure que Waybar reste toujours visible au-dessus de tout le reste.
+Pour les widgets de bureau complexes, des outils comme AGS écoutent en tâche de fond des fichiers virtuels du noyau (comme /sys/class/power_supply/ pour la batterie) ou discutent avec des démons du système (comme NetworkManager pour le Wi-Fi ou PipeWire pour le son) via un protocole de communication interne à Linux appelé D-Bus. Ils traduisent ensuite ces informations en interfaces graphiques poussées via Wayland.

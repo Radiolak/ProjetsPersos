@@ -1,0 +1,34 @@
+Le projet annuel de l'an prochain: les services sous NixOS, on automatise le déploiement des services avec ansible, on automatise la mise en place de l'infra avec terraform, on contenerise tout les services non critiques dans un k8s
+
+On mets tout sur un github comme ça on versionne tout 
+
+
+Liste des services critiques: 
+
+Active directory
+DNS
+
+Liste des services à mettre en place: 
+
+Suppervision / Metrologie:
+
+Graphana / Prometheus
+Zabbix
+Wazuh
+
+Expérience utilisateur: 
+
+Mailco 
+Nagios
+Machine de rebond mieux que guacamole
+Un site web
+Serveur SMTP
+Un système de déploiement d'app compatible windows et linux
+Glpi (automatisation de la création de vms via ansible et nixos)
+
+
+Les points importants de l'infra: 
+
+La résilience
+La sécurité
+Le pra
