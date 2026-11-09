@@ -302,3 +302,62 @@ Petits points importants:
 
 
 Pour un peu de fun on peut tester de supprimer le secret avec la commande "kubectl delete secret db-credentials" et relancer la création des pods.
+
+Partie 3 : Scaling et Load Balancing
+Objectifs du TP
+	1. Observer le Load Balancing : Vérifier que le trafic est réparti entre les différents Pods.
+	2. Scaling Manuel : Augmenter la capacité de l'application instantanément.
+	3. Scaling Automatique (HPA) : Configurer Kubernetes pour qu'il crée des Pods tout seul quand la charge augmente.
+
+Préparation de l'application
+Pour voir où vont les connexions, nous allons modifier votre 'app.yaml' pour utiliser l'image 'paulbouwer/hello-kubernetes:1.10'. Cette image est magique pour les tests : elle répond avec le nom du Pod qui traite la requête.
+
+app.yaml
+
+      containers:
+        - name: nodejs-container
+          image: paulbouwer/hello-kubernetes:1.10 # 👈 Image spécialisée pour le test
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: postgres-password
+
+Appliquez la modification : 'kubectl apply -f app.yaml'
+
+Test du Load Balancing 
+Nous voulons prouver que si on tape sur l'IP du Load Balancer, Kubernetes distribue les requêtes entre les 3 Pods.
+Ouvrez un terminal sur votre PC et lancez cette commande "boucle" : (Remplacez '<IP_DE_VOTRE_VM>' par l'IP de votre LoadBalancer)
+
+# Cette commande va taper sur l'app toutes les 0.5 secondes et afficher le nom du Pod
+while true; do curl -s http://<IP_DE_VOTRE_VM> | grep "Pod name"; sleep 0.5; done
+
+Ce que vous allez voir : Le terminal va défiler et afficher des noms de pods différents : 'Pod name: nodejs-deployment-6f78...' 'Pod name: nodejs-deployment-abc12...' 'Pod name: nodejs-deployment-xyz98...'
+Conclusion : Le Service (LoadBalancer) reçoit la requête sur un port unique et la redirige vers un Pod différent à chaque fois. C'est le Load Balancing.
+
+Le Scaling Automatique (L'Auto-Scaling / HPA)
+C'est la partie la plus impressionnante. On va dire à Kubernetes : "Si le CPU de mes Pods dépasse 50%, crée des nouveaux Pods automatiquement jusqu'à 10".
+
+1. Activez l'HPA (Horizontal Pod Autoscaler) :
+kubectl autoscale deployment nodejs-deployment --cpu-percent=50 --min=2 --max=10
+
+Vérifier qu'il est bien en place: 
+kubectl get hpa
+
+
+Le défi (Simuler une charge) : Pour que l'HPA fonctionne, il faut que les Pods consomment du CPU. Comme nous n'avons pas de vrai trafic massif, nous allons "forcer" la consommation de CPU sur un Pod en utilisant une commande de stress.
+
+# On cherche le nom d'un pod
+POD_NAME=$(kubectl get pods -l app=nodejs-app -o jsonpath='{.items[0].metadata.name}')
+
+# On lance une commande qui fait chauffer le CPU à 100% dans ce pod
+kubectl exec $POD_NAME -- /bin/sh -c "while true; do :; done"
+
+• Tapez 'kubectl get hpa -w' pour voir le pourcentage de CPU monter.
+• Dès que le CPU dépasse 50%, vous verrez la colonne 'REPLICAS' de l'HPA passer de 3 à 4, puis 5, etc.
+• Tapez 'kubectl get pods' pour voir les nouveaux Pods apparaître tout seuls.
+
+Nettoyage : Une fois terminé, arrêtez le stress (Ctrl+C) et attendez quelques minutes. Kubernetes verra que la charge est retombée et supprimera les Pods excédentaires pour économiser vos ressources.
