@@ -471,9 +471,113 @@ POD_NAME=$(kubectl get pods -l app=nodejs-app -o jsonpath='{.items[0].metadata.n
 # 2. Lancer le stress (CPU à 100%)
 kubectl exec $POD_NAME -- /bin/sh -c "while true; do :; done"</code></pre>
     <p>Observez avec <code>kubectl get hpa -w</code> le nombre de répliques augmenter automatiquement.</p>
+    <hr>
+
+    <h2 id="tp4">TP Partie 4 : Troubleshooting & Maintenance (Le mode Détective)</h2>
+
+    <p><strong>Objectifs du TP :</strong></p>
+    <ol>
+        <li><strong>Mise à jour (Rolling Update) :</strong> Apprendre à changer une version logicielle sans couper le service.</li>
+        <li><strong>Diagnostic (Troubleshooting) :</strong> Utiliser les outils pour comprendre pourquoi une application échoue.</li>
+        <li><strong>Accès direct (Proxy) :</strong> Apprendre à communiquer directement avec un Pod sans passer par le Service.</li>
+    </ol>
+
+    <h3 id="mission1">🚀 Mission 1 : La Mise à jour (Rolling Update)</h3>
+    <p>Dans la vraie vie, on ne réinstalle pas tout pour changer une version. On met à jour le déploiement existant.</p>
+
+    <p><strong>L'exercice :</strong></p>
+    <ol>
+        <li>Ouvrez votre fichier <code>application.yaml</code>.</li>
+        <li>Modifiez l'image de <code>node:18-alpine</code> vers <code>node:20-alpine</code>.</li>
+        <li>Appliquez la modification : <code class="command">kubectl apply -f application.yaml</code>.</li>
+        <li><strong>Observez le processus :</strong> Lancez <code class="command">kubectl get pods -w</code>.</li>
+    </ol>
+
+    <p><strong>Ce que vous devez observer :</strong> Kubernetes ne coupe pas tout d'un coup. Il crée un nouveau Pod (V2), attend qu'il soit prêt, puis supprime un ancien Pod (V1). C'est le <strong>Rolling Update</strong>. Votre application est restée disponible pendant toute l'opération.</p>
+
+    <h3 id="mission2">🚨 Mission 2 : Le Crash Test (Troubleshooting)</h3>
+    <p><strong>Le scénario :</strong> Une erreur de configuration a été introduite. L'application Node.js ne parvient plus à se connecter à la base de données. Votre mission est de trouver la cause exacte.</p>
+
+    <p><strong>L'exercice :</strong></p>
+    <ol>
+        <li>Ouvrez <code>application.yaml</code>.</li>
+        <li>Modifiez volontairement le mot de passe dans la section <code>env</code> de l'application pour qu'il soit <strong>différent</strong> de celui du Secret.</li>
+        <li>Appliquez : <code class="command">kubectl apply -f application.yaml</code>.</li>
+        <li><strong>Le constat :</strong> Les Pods passent en statut <code>CrashLoopBackOff</code> ou <code>Error</code>. Ils ne sont plus <code>Running</code>.</li>
+    </ol>
+
+    <p><strong>Les outils de détective :</strong></p>
+
+    <h4>Étape A : Regarder l'état global</h4>
+    <pre><code>kubectl get pods</code></pre>
+    <p><em>Le statut <code>CrashLoopBackOff</code> signifie que le conteneur démarre, plante, et Kubernetes essaie de le redémarrer en boucle.</em></p>
+
+    <h4>Étape B : Analyser les événements (Le "Pourquoi")</h4>
+    <pre><code># Remplacez &lt;nom-du-pod&gt; par le nom d'un pod en erreur
+kubectl describe pod &lt;nom-du-pod&gt;</code></pre>
+    <p><em>Regardez la section <strong>"Events"</strong> en bas du résultat. Vous verrez des messages indiquant si le pod a un problème de montage de volume ou de démarrage.</em></p>
+
+    <h4>Étape C : Lire les logs (Le "Quoi")</h4>
+    <p>C'est l'outil le plus puissant. Il permet de lire ce que l'application écrit sur sa console.</p>
+    <pre><code>kubectl logs &lt;nom-du-pod&gt;</code></pre>
+    <p><em>Vous devriez voir un message d'erreur explicite de la part de Node.js, du type : <code>Error: Connect ECONNREFUSED</code> ou <code>Access denied for user...</code></em></p>
+
+    <h3 id="mission3">🔍 Mission 3 : Accès direct via le Proxy</h3>
+    <p>Parfois, le <code>Service</code> (Load Balancer) peut masquer un problème. On veut alors parler <strong>directement</strong> à un Pod spécifique, sans passer par l'IP du Service.</p>
+
+    <p><strong>L'exercice :</strong></p>
+    <ol>
+        <li><strong>Lancez le proxy Kubernetes</strong> sur votre machine locale. Ce tunnel permet de communiquer avec l'API du cluster via votre propre PC.
+            <pre><code>kubectl proxy</code></pre>
+            <em>(Laissez ce terminal ouvert. Le proxy écoute sur <code>http://localhost:8001</code>)</em>.
+        </li>
+        <li><strong>Ouvrez un deuxième terminal</strong> pour récupérer le nom d'un Pod de manière automatique :
+            <pre><code>export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | head -n 1)
+echo "Nom du Pod ciblé : $POD_NAME"</code></pre>
+        </li>
+        <li><strong>Accédez au Pod via le tunnel :</strong> Utilisez <code>curl</code> pour envoyer une requête directement au Pod en passant par le proxy de l'API :
+            <pre><code>curl http://localhost:8001/api/v1/namespaces/default/pods/$POD_NAME:3000/proxy/</code></pre>
+            <em>(Note : On utilise le port 3000 car on parle directement au conteneur, pas au Service qui lui, écoute sur le 80).</em>
+        </li>
+    </ol>
+
+    <hr>
+
+    <h3>🎓 Résumé des commandes de survie (Cheat Sheet)</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Commande</th>
+                <th>Utilité</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>kubectl get pods</code></td>
+                <td>Voir l'état de santé rapide des pods.</td>
+            </tr>
+            <tr>
+                <td><code>kubectl describe pod &lt;nom&gt;</code></td>
+                <td>Voir l'historique des événements et les erreurs système.</td>
+            </tr>
+            <tr>
+                <td><code>kubectl logs &lt;nom&gt;</code></td>
+                <td>Lire les erreurs générées par le code de l'application.</td>
+            </tr>
+            <tr>
+                <td><code>kubectl proxy</code></td>
+                <td>Créer un tunnel sécurisé vers l'API du cluster.</td>
+            </tr>
+            <tr>
+                <td><code>kubectl apply -f &lt;fichier&gt;</code></td>
+                <td>Mettre à jour la configuration (Rolling Update).</td>
+            </tr>
+        </tbody>
+    </table>
 
     <div class="footer">
-        Document de formation Kubernetes - Usage pédagogique uniquement.
+        <marquee> Document de formation Kubernetes - Usage pédagogique uniquement. </marquee>
     </div>
 </div>
 
