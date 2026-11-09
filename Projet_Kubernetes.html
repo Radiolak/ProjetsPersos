@@ -390,9 +390,9 @@ kubectl apply -f infrastructure.yaml -n kube-home
 kubectl apply -f application.yaml -n kube-home
 
 # Vérification des pods et du stockage
-kubectl get pods
-kubectl get pvc
-kubectl get svc</code></pre>
+kubectl get pods -n kube-home
+kubectl get pvc -n kube-home
+kubectl get svc -n kube-home</code></pre>
 
     <hr>
 
@@ -421,8 +421,8 @@ kubectl get svc</code></pre>
 kubectl apply -f application.yaml -n kube-home
 
 # Vérifier le statut
-kubectl get pods -w
-kubectl get secrets</code></pre>
+kubectl get pods -w -n kube-home
+kubectl get secrets -n kube-home</code></pre>
 
     <div class="note">
         <strong>Bonnes pratiques :</strong> Ne jamais pousser de fichiers contenant des secrets sur Git. Utilisez un <code>.gitignore</code>. En production, utilisez des outils comme <strong>Sealed Secrets</strong> ou <strong>HashiCorp Vault</strong>.
@@ -461,8 +461,8 @@ while true; do curl -s http://&lt;IP_DE_VOTRE_VM&gt; | grep "Pod name"; sleep 0.
 
     <h3>3. Scaling Automatique (HPA)</h3>
     <p>On demande à Kubernetes de créer des Pods si le CPU dépasse 50% :</p>
-    <pre><code>kubectl autoscale deployment nodejs-deployment --cpu-percent=50 --min=2 --max=10
-kubectl get hpa</code></pre>
+    <pre><code>kubectl autoscale deployment nodejs-deployment --cpu-percent=50 --min=2 --max=10 -n kube-home
+kubectl get hpa -n kube-home</code></pre>
 
     <h3>4. Défi : Simuler une charge (Stress Test)</h3>
     <p>Pour déclencher l'HPA, nous allons forcer la consommation CPU d'un Pod :</p>
@@ -471,7 +471,7 @@ POD_NAME=$(kubectl get pods -l app=nodejs-app -o jsonpath='{.items[0].metadata.n
 
 # 2. Lancer le stress (CPU à 100%)
 kubectl exec $POD_NAME -- /bin/sh -c "while true; do :; done"</code></pre>
-    <p>Observez avec <code>kubectl get hpa -w</code> le nombre de répliques augmenter automatiquement.</p>
+    <p>Observez avec <code>kubectl get hpa -w -n kube-home</code> le nombre de répliques augmenter automatiquement.</p>
     <hr>
 
     <h2 id="tp4">TP Partie 4 : Troubleshooting & Maintenance (Le mode Détective)</h2>
@@ -491,7 +491,7 @@ kubectl exec $POD_NAME -- /bin/sh -c "while true; do :; done"</code></pre>
         <li>Ouvrez votre fichier <code>application.yaml</code>.</li>
         <li>Modifiez l'image de <code>node:18-alpine</code> vers <code>node:20-alpine</code>.</li>
         <li>Appliquez la modification : <code class="command">kubectl apply -f application.yaml -n kube-home</code>.</li>
-        <li><strong>Observez le processus :</strong> Lancez <code class="command">kubectl get pods -w</code>.</li>
+        <li><strong>Observez le processus :</strong> Lancez <code class="command">kubectl get pods -w -n kube-home</code>.</li>
     </ol>
 
     <p><strong>Ce que vous devez observer :</strong> Kubernetes ne coupe pas tout d'un coup. Il crée un nouveau Pod (V2), attend qu'il soit prêt, puis supprime un ancien Pod (V1). C'est le <strong>Rolling Update</strong>. Votre application est restée disponible pendant toute l'opération.</p>
@@ -503,24 +503,24 @@ kubectl exec $POD_NAME -- /bin/sh -c "while true; do :; done"</code></pre>
     <ol>
         <li>Ouvrez <code>application.yaml</code>.</li>
         <li>Modifiez volontairement le mot de passe dans la section <code>env</code> de l'application pour qu'il soit <strong>différent</strong> de celui du Secret.</li>
-        <li>Appliquez : <code class="command">kubectl apply -f application.yaml</code>.</li>
+        <li>Appliquez : <code class="command">kubectl apply -f application.yaml -n kube-home</code>.</li>
         <li><strong>Le constat :</strong> Les Pods passent en statut <code>CrashLoopBackOff</code> ou <code>Error</code>. Ils ne sont plus <code>Running</code>.</li>
     </ol>
 
     <p><strong>Les outils de détective :</strong></p>
 
     <h4>Étape A : Regarder l'état global</h4>
-    <pre><code>kubectl get pods</code></pre>
+    <pre><code>kubectl get pods -n kube-home</code></pre>
     <p><em>Le statut <code>CrashLoopBackOff</code> signifie que le conteneur démarre, plante, et Kubernetes essaie de le redémarrer en boucle.</em></p>
 
     <h4>Étape B : Analyser les événements (Le "Pourquoi")</h4>
     <pre><code># Remplacez &lt;nom-du-pod&gt; par le nom d'un pod en erreur
-kubectl describe pod &lt;nom-du-pod&gt;</code></pre>
+kubectl describe pod &lt;nom-du-pod&gt; -n kube-home</code></pre>
     <p><em>Regardez la section <strong>"Events"</strong> en bas du résultat. Vous verrez des messages indiquant si le pod a un problème de montage de volume ou de démarrage.</em></p>
 
     <h4>Étape C : Lire les logs (Le "Quoi")</h4>
     <p>C'est l'outil le plus puissant. Il permet de lire ce que l'application écrit sur sa console.</p>
-    <pre><code>kubectl logs &lt;nom-du-pod&gt;</code></pre>
+    <pre><code>kubectl logs &lt;nom-du-pod&gt; -n kube-home</code></pre>
     <p><em>Vous devriez voir un message d'erreur explicite de la part de Node.js, du type : <code>Error: Connect ECONNREFUSED</code> ou <code>Access denied for user...</code></em></p>
 
     <h3 id="mission3">🔍 Mission 3 : Accès direct via le Proxy</h3>
@@ -555,19 +555,19 @@ echo "Nom du Pod ciblé : $POD_NAME"</code></pre>
         </thead>
         <tbody>
             <tr>
-                <td><code>kubectl get pods</code></td>
+                <td><code>kubectl get pods -n kube-home</code></td>
                 <td>Voir l'état de santé rapide des pods.</td>
             </tr>
             <tr>
-                <td><code>kubectl describe pod &lt;nom&gt;</code></td>
+                <td><code>kubectl describe pod &lt;nom&gt; -n kube-home</code></td>
                 <td>Voir l'historique des événements et les erreurs système.</td>
             </tr>
             <tr>
-                <td><code>kubectl logs &lt;nom&gt;</code></td>
+                <td><code>kubectl logs &lt;nom&gt; -n kube-home</code></td>
                 <td>Lire les erreurs générées par le code de l'application.</td>
             </tr>
             <tr>
-                <td><code>kubectl proxy</code></td>
+                <td><code>kubectl proxy -n kube-home</code></td>
                 <td>Créer un tunnel sécurisé vers l'API du cluster.</td>
             </tr>
             <tr>
