@@ -267,7 +267,8 @@
 
     <h3>Installation de K3s</h3>
     <pre><code>curl -sfL https://k3s.io | sh -
-sudo kubectl get nodes</code></pre>
+sudo kubectl get nodes
+    kubectl create namespace kube-home</code></pre>
 
     <p>Une fois installé, récupérez le fichier de configuration :</p>
     <pre><code>sudo cat /etc/rancher/k3s/k3s.yaml</code></pre>
@@ -383,10 +384,10 @@ spec:
 
     <h3>Déploiement et Vérification</h3>
     <pre><code># 1. Déploiement de l'infrastructure
-kubectl apply -f infrastructure.yaml
+kubectl apply -f infrastructure.yaml -n kube-home
 
 # 2. Déploiement de l'application
-kubectl apply -f application.yaml
+kubectl apply -f application.yaml -n kube-home
 
 # Vérification des pods et du stockage
 kubectl get pods
@@ -416,8 +417,8 @@ kubectl get svc</code></pre>
     key: postgres-password</code></pre>
 
     <h3>3. Déploiement et Vérification</h3>
-    <pre><code>kubectl apply -f infrastructure.yaml
-kubectl apply -f application.yaml
+    <pre><code>kubectl apply -f infrastructure.yaml -n kube-home
+kubectl apply -f application.yaml -n kube-home
 
 # Vérifier le statut
 kubectl get pods -w
@@ -451,7 +452,7 @@ kubectl get secrets</code></pre>
                 secretKeyRef:
                   name: db-credentials
                   key: postgres-password</code></pre>
-    <p>Appliquez : <code>kubectl apply -f application.yaml</code></p>
+    <p>Appliquez : <code>kubectl apply -f application.yaml -n kube-home</code></p>
 
     <h3>2. Test du Load Balancing</h3>
     <p>Lancez cette boucle dans votre terminal pour voir le trafic circuler entre les Pods :</p>
@@ -489,7 +490,7 @@ kubectl exec $POD_NAME -- /bin/sh -c "while true; do :; done"</code></pre>
     <ol>
         <li>Ouvrez votre fichier <code>application.yaml</code>.</li>
         <li>Modifiez l'image de <code>node:18-alpine</code> vers <code>node:20-alpine</code>.</li>
-        <li>Appliquez la modification : <code class="command">kubectl apply -f application.yaml</code>.</li>
+        <li>Appliquez la modification : <code class="command">kubectl apply -f application.yaml -n kube-home</code>.</li>
         <li><strong>Observez le processus :</strong> Lancez <code class="command">kubectl get pods -w</code>.</li>
     </ol>
 
@@ -570,7 +571,7 @@ echo "Nom du Pod ciblé : $POD_NAME"</code></pre>
                 <td>Créer un tunnel sécurisé vers l'API du cluster.</td>
             </tr>
             <tr>
-                <td><code>kubectl apply -f &lt;fichier&gt;</code></td>
+                <td><code>kubectl apply -f &lt;fichier&gt; -n kube-home</code></td>
                 <td>Mettre à jour la configuration (Rolling Update).</td>
             </tr>
         </tbody>
