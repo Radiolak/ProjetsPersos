@@ -1,0 +1,489 @@
+Voici un fichier HTML complet, structuré et professionnel. J'ai utilisé un design de type "Documentation Technique" (propre, typographie lisible, blocs de code colorés) pour que l'élève puisse l'utiliser comme un véritable support de cours.
+
+Le contenu est **strictement identique** au vôtre, j'ai simplement appliqué une structure sémantique (titres, tableaux, blocs de code) pour le rendre exploitable.
+
+Vous pouvez copier ce code, l'enregistrer dans un fichier nommé `cours-kubernetes.html` et l'ouvrir avec n'importe quel navigateur.
+
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours et Travaux Pratiques : Orchestration Kubernetes (K3s)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --code-bg: #282c34;
+            --code-text: #abb2bf;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            border-bottom: 3px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            border-left: 5px solid var(--accent-color);
+            padding-left: 15px;
+            margin-top: 40px;
+            background: #f0f7fd;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: var(--accent-color);
+            margin-top: 25px;
+        }
+
+        p { margin-bottom: 15px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .diagram {
+            background-color: #2d3436;
+            color: #dfe6e9;
+            padding: 25px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.2;
+            margin: 20px 0;
+        }
+
+        .note {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffecb5;
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        ul, ol { margin-bottom: 20px; }
+        li { margin-bottom: 8px; }
+
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; margin: 0; width: 100%; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Cours et Travaux Pratiques : Orchestration Kubernetes</h1>
+
+    <p>Source de référence : <a href="https://kubernetes.io/docs/tutorials/kubernetes-basics/" target="_blank">Kubernetes Basics</a></p>
+
+    <h2>1. Fondamentaux du Cluster</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Terme / Outil</th>
+                <th>Définition & Rôle</th>
+                <th>Cas d'usage idéal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>K8s (Kubernetes)</strong></td>
+                <td>Le projet original "Vanilla". Il regroupe l'ensemble des composants standards, hautement modulaires et configurables de manière indépendante.</td>
+                <td>Datacenters d'entreprise, Cloud public (AWS, GCP) ou infrastructures de production à grande échelle.</td>
+            </tr>
+            <tr>
+                <td><strong>K3s</strong></td>
+                <td>Une version ultra-légère certifiée par la CNCF créée par Rancher. Tous les composants K8s sont compilés dans un seul binaire de moins de 100 Mo. Les briques complexes (comme etcd) sont remplacées par défaut par du plus léger (SQLite) mais restent interchangeables.</td>
+                <td>Serveurs à ressources limitées, IoT, serveurs Edge, ou environnements de staging/tests locaux légers.</td>
+            </tr>
+            <tr>
+                <td><strong>Minikube / KinD</strong></td>
+                <td>Des outils de simulation locale. Ils démarrent un cluster Kubernetes minimaliste à l'intérieur d'une seule VM ou d'un conteneur Docker sur votre propre poste de travail.</td>
+                <td>Uniquement pour le développement et l'apprentissage rapide sur son PC portable.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Nous allons utiliser <strong>K3s</strong> car il utilise exactement les mêmes concepts et commandes (kubectl) que le grand K8s, mais s'installe en une seule ligne de commande.</p>
+
+    <h3>Fonctionnement Déclaratif</h3>
+    <p>Kubernetes fonctionne de manière déclarative :</p>
+    <ol>
+        <li>Vous écrivez un fichier de configuration (manifeste YAML) indiquant l'état souhaité (ex: "Je veux 3 instances de mon application web X, exposées sur le port 80").</li>
+        <li>Vous envoyez ce fichier au cluster.</li>
+        <li>Le cluster compare constamment l'état réel du terrain avec l'état souhaité.</li>
+        <li>Si une VM ou un conteneur crash, Kubernetes s'en aperçoit et le recrée instantanément ailleurs pour respecter votre consigne. C'est le principe d'auto-réparation (<strong>Self-Healing</strong>).</li>
+    </ol>
+
+    <h3>Architecture du Cluster</h3>
+    <p>Un cluster Kubernetes se divise strictement en deux rôles de serveurs :</p>
+
+    <h4>Le Control Plane (Les nœuds Masters)</h4>
+    <p>C'est le "cerveau" de l'infrastructure. Il valide et stocke les configurations, et prend les décisions. Il comprend :</p>
+    <ul>
+        <li><strong>kube-apiserver :</strong> Le point d'entrée unique. Toutes les commandes (kubectl) et toutes les briques internes communiquent exclusivement via cette API REST.</li>
+        <li><strong>etcd :</strong> La base de données du cluster. C'est un stockage clé-valeur distribué hautement disponible qui contient toute la configuration et l'état exact du cluster. (Note : K3s utilise SQLite par défaut à la place pour consommer moins de RAM).</li>
+        <li><strong>kube-scheduler :</strong> Le répartiteur. Dès que vous demandez à lancer une application, il regarde la RAM/CPU disponible sur vos serveurs Workers et choisit le meilleur endroit où l'exécuter.</li>
+        <li><strong>kube-controller-manager :</strong> Les surveillants. Ce sont les boucles de processus qui vérifient constamment que l'état réel correspond à l'état voulu.</li>
+    </ul>
+
+    <h4>Les Workers (Les nœuds d'exécution)</h4>
+    <p>Ce sont les serveurs physiques ou virtuels qui font tourner vos applications. Ils contiennent :</p>
+    <ul>
+        <li><strong>Le Container Runtime :</strong> Le moteur qui exécute les conteneurs (ex: containerd, Docker).</li>
+        <li><strong>kubelet :</strong> L'agent local du Master. C'est un petit démon système qui reçoit les ordres de l'API Server et s'assure que les conteneurs demandés tournent bien localement sur la machine.</li>
+        <li><strong>kube-proxy :</strong> Le gestionnaire réseau. Il s’occupe du routage réseau sur chaque nœud, gère le filtrage IP (iptables/IPVS) et permet aux conteneurs de communiquer entre eux ou avec l'extérieur.</li>
+    </ul>
+
+    <h3>Les Objets de Base</h3>
+    <ul>
+        <li><strong>Pod :</strong> La plus petite unité d'exécution. Un Pod encapsule un ou plusieurs conteneurs qui partagent le même réseau et le même stockage. On ne déploie jamais un conteneur brut, on déploie un Pod.</li>
+        <li><strong>Deployment :</strong> Le contrôleur de vos Pods. C'est lui qui définit comment déployer l'application (ex: nombre de répliques, stratégie de mise à jour sans coupure).</li>
+        <li><strong>Service :</strong> Une IP virtuelle stable (Load Balancer interne). Comme les Pods sont éphémères et peuvent changer d'IP en renaissant, le Service sert de point d'accès réseau fixe pour router le trafic vers les bons Pods.</li>
+    </ul>
+
+    <h3>Orchestration et Scaling</h3>
+    <p>L'un des concepts clés est la gestion par état désiré (Desired State). Le rôle de K8s est de s'assurer en permanence que la réalité correspond à votre configuration YAML.</p>
+    <ol>
+        <li><strong>Le Scaling (Mise à l'échelle) :</strong>
+            <ul>
+                <li><strong>Scaling horizontal (Out) :</strong> Si l'utilisation du processeur (CPU) dépasse un seuil, K8s duplique vos Pods sur d'autres Nodes.</li>
+                <li><strong>Scaling vertical (Up) :</strong> Augmenter dynamiquement la RAM ou le CPU alloués à vos Pods existants.</li>
+            </ul>
+        </li>
+        <li><strong>Le Self-Healing (L'auto-guérison) :</strong> Si un Pod ne répond plus, le Control Plane le détruit et recrée instantanément un nouveau Pod sain.</li>
+        <li><strong>Le Load Balancing et Service Discovery :</strong> Le Service agit comme une IP fixe et un Load Balancer interne pour distribuer le trafic entre les Pods dont les IP changent constamment.</li>
+        <li><strong>Les Rolling Updates :</strong> Pour mettre à jour une application, Kubernetes déploie la nouvelle version (V2) progressivement, attend qu'elle soit prête, puis redirige le trafic avant de détruire l'ancienne (V1).</li>
+    </ol>
+
+    <hr>
+
+    <h2>Le Projet : Kube-Home</h2>
+
+    <div class="diagram">
+[ INTERNET ]
+                             │
+                             ▼
+               ┌───────────────────────────┐
+               │   nodejs-public-service   │  &lt;-- Répartit le trafic (Load Balancer)
+               └─────────────┬─────────────┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         ▼                   ▼                   ▼
+ ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+ │  Node.js Pod  │   │  Node.js Pod  │   │  Node.js Pod  │  &lt;-- Les 3 Pods de l'application
+ └───────┬───────┘   └───────┬───────┘   └───────┬───────┘
+         │                   │                   │
+         └───────────────────┼───────────────────┘
+                             │ (Hôte: postgres-service)
+                             ▼
+               ┌───────────────────────────┐
+               │     postgres-service      │  &lt;-- Point d'accès stable pour la BDD
+               └─────────────┬─────────────┘
+                             │
+                             ▼
+                     ┌───────────────┐
+                     │ PostgreSQL Pod│  &lt;-- Le Pod de la Base de données
+                     └───────┬───────┘
+                             │
+                             ▼
+                   ┌───────────────────┐
+                   │ Persistent Volume │  &lt;-- Les données écrites sur le disque
+                   └───────────────────┘</div>
+
+    <p><strong>But du projet :</strong> Monter un K3s sur une seule VM Linux et tester la création d'un Load Balancer, 3 pods applicatifs, et une base de données PostgreSQL pour tester le scaling vertical.</p>
+
+    <h3>Pré-requis</h3>
+    <ul>
+        <li>1 VM Debian (2 Go RAM, 2 vCPUs, 30 Go stockage).</li>
+    </ul>
+
+    <h3>Installation de K3s</h3>
+    <pre><code>curl -sfL https://k3s.io | sh -
+sudo kubectl get nodes</code></pre>
+
+    <p>Une fois installé, récupérez le fichier de configuration :</p>
+    <pre><code>sudo cat /etc/rancher/k3s/k3s.yaml</code></pre>
+    <p>Dans ce fichier, remplacez <code>server: https://127.0.0.1:6443</code> par l'adresse IP réelle de votre VM (ex: <code>https://192.168.1.217:6443</code>). Vous pouvez placer ce fichier sur votre PC personnel dans le dossier <code>.kube</code> sous le nom <code>config</code> pour piloter le cluster à distance sans SSH.</p>
+
+    <hr>
+
+    <h2>TP Partie 1 : Déploiement de l'Infrastructure</h2>
+
+    <p>Nous allons créer deux fichiers : <code>infrastructure.yaml</code> (Base de données et stockage) et <code>application.yaml</code> (Application Node.js et Load Balancer).</p>
+
+    <h3>Fichier : infrastructure.yaml</h3>
+    <pre><code># 1. Le disque dur virtuel pour la persistance
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+# 2. Le conteneur PostgreSQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "MonMotDePasseSecret"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+# 3. Le réseau interne
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432</code></pre>
+
+    <h3>Fichier : application.yaml</h3>
+    <pre><code># 1. Les 3 Pods applicatifs
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nodejs-app
+  template:
+    metadata:
+      labels:
+        app: nodejs-app
+    spec:
+      containers:
+        - name: nodejs-container
+          image: node:18-alpine 
+          resources: 
+            requests: 
+              memory: "128Mi" 
+              cpu: "100m" 
+            limits:
+              memory: "256Mi" 
+              cpu: "200m"
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_PASSWORD
+              value: "MonMotDePasseSecret"
+
+# 2. Le Load Balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: mon-load-balancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: nodejs-app
+  ports:
+    - port: 80
+      targetPort: 3000</code></pre>
+
+    <h3>Déploiement et Vérification</h3>
+    <pre><code># 1. Déploiement de l'infrastructure
+kubectl apply -f infrastructure.yaml
+
+# 2. Déploiement de l'application
+kubectl apply -f application.yaml
+
+# Vérification des pods et du stockage
+kubectl get pods
+kubectl get pvc
+kubectl get svc</code></pre>
+
+    <hr>
+
+    <h2>TP Partie 2 : Sécurisation des données (Secrets)</h2>
+
+    <p><strong>Problème :</strong> Les mots de passe sont en clair dans les fichiers YAML. C'est une faille de sécurité majeure pour Git.</p>
+    <p><strong>Objectif :</strong> Utiliser un objet <code>Secret</code> pour injecter les mots de passe de manière sécurisée.</p>
+
+    <h3>1. Création du Secret</h3>
+    <pre><code>kubectl create secret generic db-credentials --from-literal=postgres-password='MonMotDePasseUltraSecret123'</code></pre>
+    <ul>
+        <li><code>db-credentials</code> : Nom du coffre-fort.</li>
+        <li><code>postgres-password</code> : La clé (variable) à l'intérieur.</li>
+        <li><code>MonMotDePasseUltraSecret123</code> : La valeur réelle.</li>
+    </ul>
+
+    <h3>2. Mise à jour des fichiers YAML</h3>
+    <p>Dans la section <code>env</code> de vos fichiers <code>infrastructure.yaml</code> et <code>application.yaml</code>, remplacez la ligne <code>value: "..."</code> par :</p>
+    <pre><code>valueFrom: 
+  secretKeyRef: 
+    name: db-credentials 
+    key: postgres-password</code></pre>
+
+    <h3>3. Déploiement et Vérification</h3>
+    <pre><code>kubectl apply -f infrastructure.yaml
+kubectl apply -f application.yaml
+
+# Vérifier le statut
+kubectl get pods -w
+kubectl get secrets</code></pre>
+
+    <div class="note">
+        <strong>Bonnes pratiques :</strong> Ne jamais pousser de fichiers contenant des secrets sur Git. Utilisez un <code>.gitignore</code>. En production, utilisez des outils comme <strong>Sealed Secrets</strong> ou <strong>HashiCorp Vault</strong>.
+    </div>
+
+    <hr>
+
+    <h2>TP Partie 3 : Scaling et Load Balancing</h2>
+
+    <h3>Objectifs</h3>
+    <ol>
+        <li>Observer le Load Balancing (répartition du trafic).</li>
+        <li>Scaling Manuel (augmentation de capacité).</li>
+        <li>Scaling Automatique (HPA).</li>
+    </ol>
+
+    <h3>1. Préparation (Image de test)</h3>
+    <p>Modifiez <code>application.yaml</code> pour utiliser l'image spécialisée qui affiche le nom du Pod :</p>
+    <pre><code>      containers:
+        - name: nodejs-container
+          image: paulbouwer/hello-kubernetes:1.10
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: postgres-password</code></pre>
+    <p>Appliquez : <code>kubectl apply -f application.yaml</code></p>
+
+    <h3>2. Test du Load Balancing</h3>
+    <p>Lancez cette boucle dans votre terminal pour voir le trafic circuler entre les Pods :</p>
+    <pre><code># Remplacez &lt;IP_DE_VOTRE_VM&gt; par l'IP de votre LoadBalancer
+while true; do curl -s http://&lt;IP_DE_VOTRE_VM&gt; | grep "Pod name"; sleep 0.5; done</code></pre>
+
+    <h3>3. Scaling Automatique (HPA)</h3>
+    <p>On demande à Kubernetes de créer des Pods si le CPU dépasse 50% :</p>
+    <pre><code>kubectl autoscale deployment nodejs-deployment --cpu-percent=50 --min=2 --max=10
+kubectl get hpa</code></pre>
+
+    <h3>4. Défi : Simuler une charge (Stress Test)</h3>
+    <p>Pour déclencher l'HPA, nous allons forcer la consommation CPU d'un Pod :</p>
+    <pre><code># 1. Trouver le nom d'un pod
+POD_NAME=$(kubectl get pods -l app=nodejs-app -o jsonpath='{.items[0].metadata.name}')
+
+# 2. Lancer le stress (CPU à 100%)
+kubectl exec $POD_NAME -- /bin/sh -c "while true; do :; done"</code></pre>
+    <p>Observez avec <code>kubectl get hpa -w</code> le nombre de répliques augmenter automatiquement.</p>
+
+    <div class="footer">
+        Document de formation Kubernetes - Usage pédagogique uniquement.
+    </div>
+</div>
+
+</body>
+</html>
+```
