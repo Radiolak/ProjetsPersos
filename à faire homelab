@@ -1,0 +1,35 @@
+Pour le homelab on vas faire quelques évolutions, on vas remplacer cloudflaires par authrntik go 
+
+A ajouter dans mon iam: Nextcloud, grafana, portainer, proxmox,
+
+
+Créer revoir mon k3s et dans un namespace nextcloud créer un pod pour gérer ça: s'assurer que le storage soit à un endroit qui suporte l'éteinte et l'allumage du conteneur donc stockage persistent
+
+Mettre en place de la meme manière un trillium sychro pour avoir une synchro sur mes idfférents appareils 
+
+Voir si AdGuard Home ça peut etre intéressant, comment ça fonctionne et voir si on peut connecter à à ma playstation 
+
+qui est en wifi sur mon network
+
+
+Regarder quel portail d'accueil est le plus intéressant que cloudflaired, une solution auto hébergés ça peut etre intéressant ? 
+
+
+Mais avant tout ça l'évolution la plus importante sur l'infra: 
+
+En gardant votre tunnel Cloudflare en première ligne, vous conservez la protection contre les attaques (DDoS, masquage de votre IP publique). Ensuite, le tunnel transfère proprement le flux vers votre instance authentik locale qui prend le relais pour gérer l'identification.
+
+
+
+ce qu'on vas mettre en place:
+
+
+
+Option B : Le tunnel Cloudflare sert uniquement de « passerelle » vers Authentik
+Ici, Cloudflare sert uniquement de "tuyau" réseau aveugle. C'est authentik qui devient votre unique portail central d'applications.
+1. Le flux réseau : Vous créez un sous-domaine public dans votre tunnel Cloudflare (ex: auth.votredomaine.fr) qui pointe directement vers l'adresse IP locale de votre conteneur authentik. [1]
+2. L'expérience : Quand vous allez sur ce domaine, vous atterrissez directement sur la magnifique interface d'authentik. C'est depuis l'App Launcher d'authentik que vous cliquerez sur Proxmox.
+3. Avantage : Vous utilisez 100 % des capacités graphiques et de personnalisation d'authentik, tout en masquant totalement les ports de votre box internet grâce au tunnel. [1]
+
+
+Si vous choisissez de publier votre interface authentik via le tunnel, authentik lui-même ne doit pas être verrouillé par une règle de restriction Cloudflare Access au premier abord, sinon Cloudflare bloquera la communication avec votre serveur local (notamment pour l'échange de jetons de sécurité). Vous devez laisser la route réseau auth.votredomaine.fr accessible, et c'est authentik qui se chargera de repousser les intrus avec sa propre mire de connexion et sa double authentification. [1, 2]
