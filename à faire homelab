@@ -40,3 +40,9 @@ Si vous choisissez de publier votre interface authentik via le tunnel, authentik
 Monter un homeassistant sur le raspberry pi
 
 Trouver un onduleur ou vrai bonne multiprise
+
+Trouver du matériel ubiquiti: 
+
+Gateway, switch poe ou non mais manageable pour vlan, borne wifi si possible d'occas et pas cher, 
+
+Trouver un boutier pour le raspberry pi et trouver si il manque qqch pour le rendre controlleur home assistant
