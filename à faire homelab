@@ -33,3 +33,10 @@ Ici, Cloudflare sert uniquement de "tuyau" réseau aveugle. C'est authentik qui 
 
 
 Si vous choisissez de publier votre interface authentik via le tunnel, authentik lui-même ne doit pas être verrouillé par une règle de restriction Cloudflare Access au premier abord, sinon Cloudflare bloquera la communication avec votre serveur local (notamment pour l'échange de jetons de sécurité). Vous devez laisser la route réseau auth.votredomaine.fr accessible, et c'est authentik qui se chargera de repousser les intrus avec sa propre mire de connexion et sa double authentification. [1, 2]
+
+
+
+
+Monter un homeassistant sur le raspberry pi
+
+Trouver un onduleur ou vrai bonne multiprise
