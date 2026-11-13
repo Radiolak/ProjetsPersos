@@ -1,1 +1,81 @@
 
+
+DOSSIER D'ARCHITECTURE TECHNIQUE (DAT)
+
+Projet : Déploiement Infrastructure Réseau & Domotique (4 niveaux — 70 m² — Capacité 50 pers.)
+
+1. Nomenclature Matérielle (BOM)
+
+
+Catégorie	Équipement	Référence	Quantité	Rôle technique
+Routage / FW	Passerelle UniFi	Cloud Gateway Ultra (UCG-Ultra)	1	Routage inter-VLAN, Pare-feu, Failover Dual-WAN, Contrôleur
+Secours WAN	Routeur 4G/LTE	TP-Link TL-MR6400 ou U-LTE-Backup	1	Connexion de secours automatique (WAN2)
+Commutation	Switch PoE+ 16 ports	UniFi USW-Lite-16-PoE (45W)	1	Distribution filaire, alimentation PoE des bornes et de l'iPad
+Sans-fil (Wi-Fi)	Borne Wi-Fi 6	UniFi U6-Plus	3	Diffusion multi-SSID sur les 4 niveaux (RDC, R+2, R+3)
+Contrôle Mural	Support iPad + PoE	Support mural verrouillable + Splitter PoE vers USB-C	1	Alimentation continue et connexion filaire (ou Wi-Fi) de la tablette
+Protection	Onduleur (UPS)	APC Back-UPS 700VA (4 prises FR)	1	Maintien électrique Box + Routeur + Switch (autonomie ~25 min)
+Intégration	Coffret & Brassage	Coffret mural 10" ou 19" (6U) + Bandeau prise + Patch panel 16p	1	Protection physique dans l'arrière-cuisine
+Câblage	Câble & Connectique	Bobine 100m Cat.6 U/UTP + Noyaux RJ45 + Cordons 0.25m	1 lot	Liaisons montantes inter-étages et brassage baie
+
+
+2. Architecture Logique & Plan d'Adressage (VLANs)
+
+L'infrastructure est segmentée en 5 réseaux virtuels (VLAN) étanches. Le serveur DHCP est porté par la passerelle UCG-Ultra.
+
+ID VLAN	Nom du Réseau	Sous-réseau (CIDR)	Passerelle	Plage DHCP	Durée Bail	Usage & Équipements
+VLAN 1 (ou 10)	MGMT-ADMIN	10.10.10.0/24	10.10.10.1	.50 – .100	24h	Switch, Bornes Wi-Fi, Onduleur (IP fixes .2 à .20)
+VLAN 20	POS-METIER	10.10.20.0/24	10.10.20.1	.50 – .150	24h	Caisses enregistreuses, TPE (IP fixes), Imprimantes tickets
+VLAN 30	IOT-DOMOTIQUE	10.10.30.0/24	10.10.30.1	.50 – .200	24h	iPad mural, Ponts lumières, Sonos, Thermostats, Frigos
+VLAN 40	GUEST-WIFI	10.10.40.0/23	10.10.40.1	40.10 – 41.250	2h	Smartphones et ordinateurs des clients (510 IP dispo)
+VLAN 50	CCTV-SECU	10.10.50.0/24	10.10.50.1	.50 – .100	24h	Caméras IP, Enregistreur vidéo (NVR)
+
+
+3. Plan Wi-Fi (SSIDs) & Qualité de Service (QoS)
+
+
+Diffusion Radio (3 Bornes U6-Plus)
+
+• Implantation : RDC (plafond salle), R+2 (palier/plafond), R+3 (plafond). Configuration en quinconce pour couvrir le R+1 par rayonnement vertical.
+• Puissance d'émission (Tx Power) : Réglée sur Medium en 2.4 GHz et High en 5 GHz pour favoriser l'itinérance (Fast Roaming 802.11r) entre les étages.
+
+Configuration des SSIDs
+
+1. [NomBoutique]-Staff (Masqué) -> Lié au VLAN 20 : WPA2/WPA3-PSK. Réservé aux TPE mobiles et tablettes de prise de commande.
+2. [NomBoutique]-IoT (Masqué) -> Lié au VLAN 30 : WPA2-PSK uniquement (2.4 GHz activé pour compatibilité capteurs/frigos/lumières). Option Band Steering désactivée.
+3. [NomBoutique]-FreeWiFi (Visible) -> Lié au VLAN 40 : Portail captif actif (conditions d'utilisation + journalisation légale).
+	• Isolation L2 (Client Isolation) : Activée (bloque toute communication entre deux clients).
+	• Profil de bande passante (QoS) : Limité à 15 Mbps en téléchargement / 5 Mbps en envoi par appareil.
+
+Priorisation du Trafic (Smart Queues / QoS)
+
+• Activation du Smart Queue Management sur le port WAN1 à 90 % du débit réel mesuré (évite le Bufferbloat).
+• Règle de priorité haute sur le VLAN 20 (POS) pour garantir des transactions bancaires instantanées même en cas de saturation du Wi-Fi public.
+
+4. Matrice des Flux & Règles Pare-feu (Firewall)
+
+Par défaut, le routage inter-VLAN est bloqué (Drop All Inter-VLAN). Seules les exceptions suivantes sont autorisées :
+
+Source	Destination	Ports / Protocoles	Action	Justification technique
+VLAN 10 (Admin)	Tous les VLANs	Tous (Any)	ALLOW	Administration et diagnostic global
+VLAN 30 (iPad mural)	VLAN 30 (IoT)	mDNS (5353), AirPlay, Sonos, HTTP/S	ALLOW	Pilotage local des lumières et de la musique depuis l'iPad
+VLAN 20 (POS)	WAN1 / WAN2	TCP 443, 80, ports bancaires TPE	ALLOW	Encaissement et synchronisation logiciel de caisse
+VLAN 30 (IoT)	WAN1 / WAN2	TCP 443, NTP (123), MQTT (8883)	ALLOW	Mises à jour firmware et contrôle cloud domotique
+VLAN 40 (Clients)	WAN1 / WAN2	TCP/UDP 80, 443, 53 (DNS)	ALLOW	Navigation web standard uniquement (blocage P2P/SMTP)
+VLAN 40 (Clients)	RFC1918 (IP Privées)	Tous (Any)	DROP	Isolation stricte du réseau interne de la boutique
+VLAN 50 (Caméras)	WAN1 / WAN2	Tous (Any)	DROP	Vidéosurveillance strictement locale (accès via VPN uniquement)
+
+
+5. Plan de Brassage Physique (Switch 16 Ports PoE+)
+
+
+Port Switch	Type	Profil VLAN (Native / Tagged)	Équipement connecté
+Port 1	PoE+	Native: VLAN 10 / Tagged: All	Borne Wi-Fi 1 (RDC)
+Port 2	PoE+	Native: VLAN 10 / Tagged: All	Borne Wi-Fi 2 (R+2)
+Port 3	PoE+	Native: VLAN 10 / Tagged: All	Borne Wi-Fi 3 (R+3)
+Port 4	PoE+	Native: VLAN 30 / Tagged: None	iPad Mural (via Splitter PoE vers USB-C)
+Port 5-6	PoE+	Native: VLAN 50 / Tagged: None	Caméras IP PoE (Cuisine / Entrée)
+Port 7-8	PoE+	Désactivé (Sécurité)	Réserve PoE
+Port 9-10	Standard	Native: VLAN 20 / Tagged: None	Caisse principale + Imprimante cuisine
+Port 11-12	Standard	Native: VLAN 30 / Tagged: None	Pont domotique (Hue/Lutron) + Contrôleur Sonos
+Port 13-15	Standard	Désactivé (Sécurité)	Réserve filaire
+Port 16	Uplink	Native: VLAN 10 / Tagged: All	Lien montant vers Routeur UCG-Ultra (LAN)
